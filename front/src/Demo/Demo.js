@@ -1,5 +1,6 @@
 // Import modules
 import * as THREE from "three";
+import React, { Suspense, useRef, useEffect, useState } from 'react';
 import { Canvas, useLoader, extend, useFrame, useThree } from '@react-three/fiber';
 import { useFBX, useGLTF, useAnimations } from '@react-three/drei';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
@@ -13,27 +14,44 @@ import CameraControls from "./CameraControls/CameraControls";
 import './Demo.css';
 
 
-function Model () {
-  // const ref1 = useRef();
-
-  const fbx = useLoader(FBXLoader, '/models/character.fbx');
-  // const idle = useLoader(FBXLoader, '/models/idle.fbx');
+function Model (props) {
   
-  // console.log(idle)
+  const [char, setChar] = useState(undefined);
+  const [actions, setActions] = useState({});
+  const [mixers, setMixers] = useState({});
 
-  // const { scene } = useGLTF('/models/character.gltf');
-  // const { animations } = useGLTF('/models/character.gltf');
-
-  // const { actions } = useAnimations(animations)
+  useEffect(() => {
+    let actions = {};
+    let mixers = {};
+    const loaderCharacter = new FBXLoader();
+    loaderCharacter.load('models/character.fbx', (character) => {
   
-  // console.log(actions)
-
-  // const { ref, mixer, names, actions, clips } = useAnimations(idle.animations);
+        // Load the model
+        character.scale.setScalar(0.3);
+        character.position.set(0, 0, -30)
+        character.rotation.set(Math.PI/2, 0, 0)
+        character.traverse(child => {
+            child.castShadow = true;
+            child.receiveShadow = true;
+        });
   
-  // const fbx = useFBX('/models/character.fbx');
-  // const idle = useFBX('/models/idle.fbx');
-  // const { actions } = useAnimations(idle.animations);
+        // Load the idle animation
+        const loaderWalk = new FBXLoader();
+        loaderWalk.load('models/walk.fbx', (walk) => {
+            const mixer = new THREE.AnimationMixer(character);     
+            const action = mixer.clipAction( walk.animations[0] );
+            mixers["walk"] = mixer;
+            actions["walk"] = action;
+            // action.play();
+        });
+  
+        // Load the walk animation
+        const loaderIdle = new FBXLoader();
+        loaderIdle.load('models/idle.fbx', (idle) => {
+            const mixer = new THREE.AnimationMixer(character);     
+            const action = mixer.clipAction( idle.animations[0] );
             mixers["idle"] = mixer;
+            actions["idle"] = action;
             action.play();
         });
   
@@ -44,17 +62,26 @@ function Model () {
     const clock = new THREE.Clock();
     animate();
     function animate() {
-        requestAnimationFrame(animate);
-        const delta = clock.getDelta();
-        if ( mixers["idle"] ) mixers["idle"].update( delta );
-        if ( mixers["walk"] ) mixers["walk"].update( delta );
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      if ( mixers["idle"] ) mixers["idle"].update( delta );
+      if ( mixers["walk"] ) mixers["walk"].update( delta );
     }
+
+    setActions(actions);
+    setMixers(mixers);
   }, [])
 
   useEffect(() => {
-    console.log(char);
+    console.log('Model is loaded');
   }, [char])
 
+  useEffect(() => {
+    if (actions["walk"] && props.anim === 'walk') {
+      console.log(props.anim);
+      actions["walk"].play();
+    }
+  }, [actions, props.anim])
 
   return (
     char ? <primitive object={char} /> : <></>
@@ -62,24 +89,12 @@ function Model () {
 }
 
 export default function Demo () {
-  // const fbx = useLoader(FBXLoader, '/models/character.fbx');
-  // const idle = useLoader(FBXLoader, '/models/idle.fbx');
 
-
-
-  // useEffect(() => {
-  //   actions.test_anim.play()
-  // });
-
-  // useEffect(() => {
-  //   // Reset and fade in animation after an index has been changed
-  //   actions[0].reset().fadeIn(0.5).play()
-  //   // In the clean-up phase, fade it out
-  //   return () => actions[0].fadeOut(0.5)
-  // }, [actions, names])
+  const [currentAnim, setCurrentAnim] = useState('idle');
 
   return (
     <div className="demo">
+      <button onClick={() => setCurrentAnim('walk')}>Animation</button>
       <Canvas 
           camera={{ position: [0, -100, 100], fov: 55 }}
           gl={{ antialias: true }}
@@ -91,7 +106,7 @@ export default function Demo () {
           <CameraControls />
           <Suspense fallback={<Loading />}>
             <Plane position-z={0} scale={[100, 100, 1]} />
-            <Model />       
+            <Model anim={currentAnim}/>       
           </Suspense>
       </Canvas>
     </div>
