@@ -4,10 +4,30 @@ import Demo from './Demo/Demo';
 function App() {
   return (
     <div className="App">
-      <Demo />
-      <Demo />
-      <Demo />
-      <Demo />
+      <div className="block-left">
+        <Demo />
+        <Demo />
+        <Demo />
+        <Demo />
+      </div>
+      <div className="block-left">
+        <Demo />
+        <Demo />
+        <Demo />
+        <Demo />
+      </div>
+      <div className="block-left">
+        <Demo />
+        <Demo />
+        <Demo />
+        <Demo />
+      </div>
+      <div className="block-left">
+        <Demo />
+        <Demo />
+        <Demo />
+        <Demo />
+      </div>
     </div>
   );
 }

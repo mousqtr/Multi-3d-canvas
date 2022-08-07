@@ -1,5 +1,15 @@
 .demo {
-    background-color: aqua;
+    background-color: white;
+    border: 1px solid black;
+    margin: 10px;
     width: 200px;
     height: 200px;
+    position: relative;
+}
+
+button {
+    position: absolute;
+    z-index: 10000;
+    top: 0;
+    right: 0;
 }
